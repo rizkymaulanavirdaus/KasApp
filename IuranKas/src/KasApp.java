@@ -1,16 +1,22 @@
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-
 public class KasApp {
     private static List<User> users = new ArrayList<>();
     private static List<Iuran> iurans = new ArrayList<>();
-    private static List<Iuran.Payment> payments = new ArrayList<>();
+    private static List<Payment> payments = new ArrayList<>();
     private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        // Menambahkan pengguna admin default
+        loadUsers();
+        loadIurans();
+        loadPayments();
+        // Menambahkan pengguna admin default jika tidak ada
+        if (users.isEmpty()) {
+            users.add(new User("admin", "admin123"));
+        }
         login();
     }
 
@@ -27,7 +33,7 @@ public class KasApp {
             } else if (isUser (username, password)) {
                 userMenu(username);
             } else {
-                System.out.println("password atau username salah! Silakan coba lagi.");
+                System.out.println("Kredensial salah! Silakan coba lagi.");
             }
         }
     }
@@ -101,7 +107,7 @@ public class KasApp {
     private static void manageIuran() {
         while (true) {
             System.out.println("\nKelola Iuran:");
-            System.out.println("1. Tambah Iuran");
+            System.out.println(" 1. Tambah Iuran");
             System.out.println("2. Lihat Iuran");
             System.out.println("3. Lihat Laporan");
             System.out.println("4. Kembali ke Menu Admin");
@@ -129,7 +135,7 @@ public class KasApp {
 
     private static void userMenu(String username) {
         while (true) {
-            System.out.println("\nMenu Pengguna :");
+            System.out.println("\nMenu Pengguna:");
             System.out.println("1. Lihat Status Iuran");
             System.out.println("2. Bayar Iuran");
             System.out.println("3. Lihat Riwayat Pembayaran");
@@ -156,23 +162,24 @@ public class KasApp {
         }
     }
 
-    private static void addUser () {
+    private static void addUser  () {
         System.out.print("Masukkan username: ");
         String username = scanner.nextLine();
         System.out.print("Masukkan password: ");
         String password = scanner.nextLine();
         users.add(new User(username, password));
+        saveUsers();
         System.out.println("Pengguna berhasil ditambahkan.");
     }
 
     private static void viewUsers() {
         System.out.println("Daftar Pengguna:");
-        for (User  user : users) {
+        for (User   user : users) {
             System.out.println("Username: " + user.username);
         }
     }
 
-    private static void editUser () {
+    private static void editUser  () {
         System.out.print("Masukkan username yang ingin diedit: ");
         String username = scanner.nextLine();
         User user = users.stream().filter(u -> u.username.equals(username)).findFirst().orElse(null);
@@ -181,19 +188,21 @@ public class KasApp {
             System.out.print("Masukkan password baru: ");
             String newPassword = scanner.nextLine();
             user.password = newPassword;
+            saveUsers();
             System.out.println("Pengguna berhasil diperbarui.");
         } else {
             System.out.println("Pengguna tidak ditemukan.");
         }
     }
 
-    private static void deleteUser () {
+    private static void deleteUser  () {
         System.out.print("Masukkan username yang ingin dihapus: ");
         String username = scanner.nextLine();
         User user = users.stream().filter(u -> u.username.equals(username)).findFirst().orElse(null);
 
         if (user != null) {
             users.remove(user);
+            saveUsers();
             System.out.println("Pengguna berhasil dihapus.");
         } else {
             System.out.println("Pengguna tidak ditemukan.");
@@ -207,6 +216,7 @@ public class KasApp {
         double amount = scanner.nextDouble();
         scanner.nextLine(); // Clear buffer
         iurans.add(new Iuran(name, amount));
+        saveIurans();
         System.out.println("Iuran berhasil ditambahkan.");
     }
 
@@ -219,8 +229,34 @@ public class KasApp {
 
     private static void viewReports() {
         System.out.println("Laporan Iuran:");
-        for (Iuran.Payment payment : payments) {
-            System.out.println("Username: " + payment.username + ", Iuran: " + payment.iuranName + ", Jumlah: " + payment.amount + ", Tanggal: " + payment.date);
+        double totalPayments = 0;
+        List<String> paidUsers = new ArrayList<>();
+        List<String> unpaidUsers = new ArrayList<>();
+
+        for (Iuran iuran : iurans) {
+            boolean hasPaid = false;
+            for (Payment payment : payments) {
+                if (payment.iuranName.equals(iuran.name)) {
+                    totalPayments += payment.amount;
+                    hasPaid = true;
+                    paidUsers.add(payment.username + " telah membayar " + iuran.name);
+                }
+            }
+            if (!hasPaid) {
+                for (User  user : users) {
+                    unpaidUsers.add(user.username + " belum membayar " + iuran.name);
+                }
+            }
+        }
+
+        System.out.println("Total Pembayaran yang Diterima: " + totalPayments);
+        System.out.println("Pengguna yang Telah Membayar Iuran:");
+        for (String paidUser  : paidUsers) {
+            System.out.println(paidUser );
+        }
+        System.out.println("Pengguna yang Belum Membayar Iuran:");
+        for (String unpaidUser  : unpaidUsers) {
+            System.out.println(unpaidUser );
         }
     }
 
@@ -248,10 +284,13 @@ public class KasApp {
             if (amount == selectedIuran.amount) {
                 System.out.print("Masukkan tanggal pembayaran: ");
                 String date = scanner.nextLine();
-                payments.add(new Iuran.Payment(username, iuranName, amount, date));
+                System.out.print("Masukkan path bukti gambar: ");
+                String imagePath = scanner.nextLine(); // Input path gambar
+                payments.add(new Payment(username, iuranName, amount, date, imagePath));
+                savePayments();
                 System.out.println("Pembayaran berhasil.");
             } else {
-                System.out.println("Jumlah pembayaran tidak sesuai.");
+                System.out.println("Jumlah pembayaran tidak sesu ai.");
             }
         } else {
             System.out.println("Iuran tidak ditemukan.");
@@ -260,10 +299,85 @@ public class KasApp {
 
     private static void viewPaymentHistory(String username) {
         System.out.println("Riwayat Pembayaran untuk " + username + ":");
-        for (Iuran.Payment payment : payments) {
+        for (Payment payment : payments) {
             if (payment.username.equals(username)) {
-                System.out.println("Iuran: " + payment.iuranName + ", Jumlah: " + payment.amount + ", Tanggal: " + payment.date);
+                System.out.println("Iuran: " + payment.iuranName + ", Jumlah: " + payment.amount + ", Tanggal: " + payment.date + ", Bukti: " + payment.imagePath);
             }
+        }
+    }
+
+    private static void saveUsers() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.csv"))) {
+            for (User  user : users) {
+                writer.write(user.toString());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Error saving users: " + e.getMessage());
+        }
+    }
+
+    private static void loadUsers() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("users.csv"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    users.add(new User(parts[0], parts[1]));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error loading users: " + e.getMessage());
+        }
+    }
+
+    private static void saveIurans() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("iurans.csv"))) {
+            for (Iuran iuran : iurans) {
+                writer.write(iuran.toString());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Error saving iurans: " + e.getMessage());
+        }
+    }
+
+    private static void loadIurans() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("iurans.csv"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    iurans.add(new Iuran(parts[0], Double.parseDouble(parts[1])));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error loading iurans: " + e.getMessage());
+        }
+    }
+
+    private static void savePayments() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("payments.csv"))) {
+            for (Payment payment : payments) {
+                writer.write(payment.toString());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Error saving payments: " + e.getMessage());
+        }
+    }
+
+    private static void loadPayments() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("payments.csv"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 5) {
+                    payments.add(new Payment(parts[0], parts[1], Double.parseDouble(parts[2]), parts[3], parts[4]));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error loading payments: " + e.getMessage());
         }
     }
 }
