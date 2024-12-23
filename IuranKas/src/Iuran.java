@@ -7,17 +7,29 @@ class Iuran {
         this.amount = amount;
     }
 
-    static class Payment {
-        String username;
-        String iuranName;
-        double amount;
-        String date;
+    @Override
+    public String toString() {
+        return name + "," + amount;
+    }
+}
 
-        public Payment(String username, String iuranName, double amount, String date) {
-            this.username = username;
-            this.iuranName = iuranName;
-            this.amount = amount;
-            this.date = date;
-        }
+class Payment {
+    String username;
+    String iuranName;
+    double amount;
+    String date;
+    String imagePath; // Menambahkan field untuk path gambar
+
+    public Payment(String username, String iuranName, double amount, String date, String imagePath) {
+        this.username = username;
+        this.iuranName = iuranName;
+        this.amount = amount;
+        this.date = date;
+        this.imagePath = imagePath; // Menyimpan path gambar
+    }
+
+    @Override
+    public String toString() {
+        return username + "," + iuranName + "," + amount + "," + date + "," + imagePath; // Menyimpan path gambar di CSV
     }
 }
