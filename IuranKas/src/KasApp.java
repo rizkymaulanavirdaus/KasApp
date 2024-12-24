@@ -1,3 +1,7 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,7 +11,7 @@ public class KasApp {
     private static List<User> users = new ArrayList<>();
     private static List<Iuran> iurans = new ArrayList<>();
     private static List<Payment> payments = new ArrayList<>();
-    private static Scanner scanner = new Scanner(System.in);
+    private static JFrame mainFrame;
 
     public static void main(String[] args) {
         loadUsers();
@@ -17,218 +21,242 @@ public class KasApp {
         if (users.isEmpty()) {
             users.add(new User("admin", "admin123"));
         }
-        login();
+        createLoginWindow();
     }
 
-    private static void login() {
-        while (true) {
-            System.out.println("Selamat datang di Aplikasi Iuran Kas");
-            System.out.print("Masukkan username: ");
-            String username = scanner.nextLine();
-            System.out.print("Masukkan password: ");
-            String password = scanner.nextLine();
+    private static void createLoginWindow() {
+        mainFrame = new JFrame("Login");
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        mainFrame.setSize(400, 200);
+        mainFrame.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 20));
+        mainFrame.getRootPane().setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        mainFrame.setLocationRelativeTo(null);
 
-            if (isAdmin(username, password)) {
-                adminMenu();
-            } else if (isUser (username, password)) {
-                userMenu(username);
-            } else {
-                System.out.println("Kredensial salah! Silakan coba lagi.");
+        JLabel usernameLabel = new JLabel("Username:");
+        JTextField usernameField = new JTextField(24);
+        JLabel passwordLabel = new JLabel("Password:");
+        JPasswordField passwordField = new JPasswordField(24);
+        JButton loginButton = new JButton("Login");
+
+        loginButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String username = usernameField.getText();
+                String password = new String(passwordField.getPassword());
+                if (isAdmin(username, password)) {
+                    mainFrame.dispose();
+                    createAdminMenu();
+                } else if (isUser (username, password)) {
+                    mainFrame.dispose();
+                    createUserMenu(username);
+                } else {
+                    JOptionPane.showMessageDialog(mainFrame, "Username atau Password salah! Silakan coba lagi.");
+                }
             }
-        }
-    }
-
-    private static boolean isAdmin(String username, String password) {
-        return username.equals("admin") && password.equals("admin123");
-    }
-
-    private static boolean isUser (String username, String password) {
-        return users.stream().anyMatch(user -> user.username.equals(username) && user.password.equals(password));
-    }
-
-    private static void adminMenu() {
-        while (true) {
-            System.out.println("\nMenu Admin:");
-            System.out.println("1. Kelola Pengguna");
-            System.out.println("2. Kelola Iuran");
-            System.out.println("3. Logout");
-            System.out.print("Pilih opsi: ");
-            int choice = scanner.nextInt();
-            scanner.nextLine(); // Clear buffer
-
-            switch (choice) {
-                case 1:
-                    manageUsers();
-                    break;
-                case 2:
-                    manageIuran();
-                    break;
-                case 3:
-                    return;
-                default:
-                    System.out.println("Pilihan tidak valid!");
+            private static boolean isAdmin(String username, String password) {
+                return username.equals("admin") && password.equals("admin123");
             }
-        }
+
+            private static boolean isUser (String username, String password) {
+                return users.stream().anyMatch(user -> user.username.equals(username) && user.password.equals(password));
+            }
+        });
+
+        mainFrame.add(usernameLabel);
+        mainFrame.add(usernameField);
+        mainFrame.add(passwordLabel);
+        mainFrame.add(passwordField);
+        mainFrame.add(loginButton);
+        mainFrame.setVisible(true);
+    }
+
+    private static void createAdminMenu() {
+        JFrame adminFrame = new JFrame("Menu Admin");
+        adminFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        adminFrame.setSize(400, 200);
+        adminFrame.setLayout(new FlowLayout(FlowLayout.CENTER,100,10));
+        adminFrame.getRootPane().setBorder(BorderFactory.createEmptyBorder(20,100,20,100));
+        adminFrame.setLocationRelativeTo(null);
+
+        JButton manageUsersButton = new JButton("Kelola Pengguna");
+        JButton manageIuranButton = new JButton("Kelola Iuran");
+        JButton logoutButton = new JButton("Logout");
+
+        manageUsersButton.addActionListener(e -> manageUsers());
+        manageIuranButton.addActionListener(e -> manageIuran());
+        logoutButton.addActionListener(e -> {
+            adminFrame.dispose();
+            createLoginWindow();
+        });
+
+        adminFrame.add(manageUsersButton);
+        adminFrame.add(manageIuranButton);
+        adminFrame.add(logoutButton);
+        adminFrame.setVisible(true);
+    }
+
+    private static void createUserMenu (String username) {
+        JFrame userFrame = new JFrame("Menu Pengguna");
+        userFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        userFrame.setSize(400, 225);
+        userFrame.setLayout(new FlowLayout(FlowLayout.CENTER, 100, 10));
+        userFrame.getRootPane().setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        userFrame.setLocationRelativeTo(null);
+
+        JButton viewStatusButton = new JButton("Lihat Status Iuran");
+        JButton payIuranButton = new JButton("Bayar Iuran");
+        JButton viewHistoryButton = new JButton("Lihat Riwayat Pembayaran ");
+        JButton logoutButton = new JButton("Logout");
+
+        viewStatusButton.addActionListener(e -> viewStatusIuran(username));
+        payIuranButton.addActionListener(e -> payIuran(username));
+        viewHistoryButton.addActionListener(e -> viewPaymentHistory(username));
+        logoutButton.addActionListener(e -> {
+            userFrame.dispose();
+            createLoginWindow();
+        });
+
+        userFrame.add(viewStatusButton);
+        userFrame.add(payIuranButton);
+        userFrame.add(viewHistoryButton);
+        userFrame.add(logoutButton);
+        userFrame.setVisible(true);
     }
 
     private static void manageUsers() {
-        while (true) {
-            System.out.println("\nKelola Pengguna:");
-            System.out.println("1. Tambah Pengguna");
-            System.out.println("2. Lihat Pengguna");
-            System.out.println("3. Edit Pengguna");
-            System.out.println("4. Hapus Pengguna");
-            System.out.println("5. Kembali ke Menu Admin");
-            System.out.print("Pilih opsi: ");
-            int choice = scanner.nextInt();
-            scanner.nextLine(); // Clear buffer
+        JFrame manageUsersFrame = new JFrame("Kelola Pengguna");
+        manageUsersFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        manageUsersFrame.setSize(400, 200);
+        manageUsersFrame.setLayout(new FlowLayout(FlowLayout.CENTER, 40, 15));
+        manageUsersFrame.getRootPane().setBorder(BorderFactory.createEmptyBorder(10,20,30,20));
+        manageUsersFrame.setLocationRelativeTo(null);
 
-            switch (choice) {
-                case 1:
-                    addUser ();
-                    break;
-                case 2:
-                    viewUsers();
-                    break;
-                case 3:
-                    editUser ();
-                    break;
-                case 4:
-                    deleteUser ();
-                    break;
-                case 5:
-                    return;
-                default:
-                    System.out.println("Pilihan tidak valid!");
-            }
-        }
+        JButton addUserButton = new JButton("Tambah Pengguna");
+        JButton viewUsersButton = new JButton("Lihat Pengguna");
+        JButton editUserButton = new JButton("Edit Pengguna");
+        JButton deleteUserButton = new JButton("Hapus Pengguna");
+        JButton backButton = new JButton("Kembali");
+
+        addUserButton.addActionListener(e -> addUser ());
+        viewUsersButton.addActionListener(e -> viewUsers());
+        editUserButton.addActionListener(e -> editUser ());
+        deleteUserButton.addActionListener(e -> deleteUser ());
+        backButton.addActionListener(e -> manageUsersFrame.dispose());
+
+        manageUsersFrame.add(addUserButton);
+        manageUsersFrame.add(viewUsersButton);
+        manageUsersFrame.add(editUserButton);
+        manageUsersFrame.add(deleteUserButton);
+        manageUsersFrame.add(backButton);
+        manageUsersFrame.setVisible(true);
     }
 
     private static void manageIuran() {
-        while (true) {
-            System.out.println("\nKelola Iuran:");
-            System.out.println(" 1. Tambah Iuran");
-            System.out.println("2. Lihat Iuran");
-            System.out.println("3. Lihat Laporan");
-            System.out.println("4. Kembali ke Menu Admin");
-            System.out.print("Pilih opsi: ");
-            int choice = scanner.nextInt();
-            scanner.nextLine(); // Clear buffer
+        JFrame manageIuranFrame = new JFrame("Kelola Iuran");
+        manageIuranFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        manageIuranFrame.setSize(400, 200);
+        manageIuranFrame.setLayout(new FlowLayout(FlowLayout.CENTER, 100, 10));
+        manageIuranFrame.getRootPane().setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        manageIuranFrame.setLocationRelativeTo(null);
 
-            switch (choice) {
-                case 1:
-                    addIuran();
-                    break;
-                case 2:
-                    viewIuran();
-                    break;
-                case 3:
-                    viewReports();
-                    break;
-                case 4:
-                    return;
-                default:
-                    System.out.println("Pilihan tidak valid!");
-            }
-        }
+        JButton addIuranButton = new JButton("Tambah Iuran");
+        JButton viewIuranButton = new JButton("Lihat Iuran");
+        JButton viewReportsButton = new JButton("Lihat Laporan");
+        JButton backButton = new JButton("Kembali");
+
+        addIuranButton.addActionListener(e -> addIuran());
+        viewIuranButton.addActionListener(e -> viewIuran());
+        viewReportsButton.addActionListener(e -> viewReports());
+        backButton.addActionListener(e -> manageIuranFrame.dispose());
+
+        manageIuranFrame.add(addIuranButton);
+        manageIuranFrame.add(viewIuranButton);
+        manageIuranFrame.add(viewReportsButton);
+        manageIuranFrame.add(backButton);
+        manageIuranFrame.setVisible(true);
     }
 
-    private static void userMenu(String username) {
-        while (true) {
-            System.out.println("\nMenu Pengguna:");
-            System.out.println("1. Lihat Status Iuran");
-            System.out.println("2. Bayar Iuran");
-            System.out.println("3. Lihat Riwayat Pembayaran");
-            System.out.println("4. Logout");
-            System.out.print("Pilih opsi: ");
-            int choice = scanner.nextInt();
-            scanner.nextLine(); // Clear buffer
+    private static void addUser () {
+        JTextField usernameField = new JTextField();
+        JTextField passwordField = new JTextField();
+        Object[] message = {
+                "Username:", usernameField,
+                "Password:", passwordField
+        };
 
-            switch (choice) {
-                case 1:
-                    viewStatusIuran(username);
-                    break;
-                case 2:
-                    payIuran(username);
-                    break;
-                case 3:
-                    viewPaymentHistory(username);
-                    break;
-                case 4:
-                    return;
-                default:
-                    System.out.println("Pilihan tidak valid!");
-            }
+        int option = JOptionPane.showConfirmDialog(null, message, "Tambah Pengguna", JOptionPane.OK_CANCEL_OPTION);
+        if (option == JOptionPane.OK_OPTION) {
+            String username = usernameField.getText();
+            String password = passwordField.getText();
+            users.add(new User(username, password));
+            saveUsers();
+            JOptionPane.showMessageDialog(null, "Pengguna berhasil ditambahkan.");
         }
-    }
-
-    private static void addUser  () {
-        System.out.print("Masukkan username: ");
-        String username = scanner.nextLine();
-        System.out.print("Masukkan password: ");
-        String password = scanner.nextLine();
-        users.add(new User(username, password));
-        saveUsers();
-        System.out.println("Pengguna berhasil ditambahkan.");
     }
 
     private static void viewUsers() {
-        System.out.println("Daftar Pengguna:");
-        for (User   user : users) {
-            System.out.println("Username: " + user.username);
+        StringBuilder userList = new StringBuilder("Daftar Pengguna:\n");
+        for (User  user : users) {
+            userList.append("Username: ").append(user.username).append("\n");
         }
+        JOptionPane.showMessageDialog(null, userList.toString());
     }
 
-    private static void editUser  () {
-        System.out.print("Masukkan username yang ingin diedit: ");
-        String username = scanner.nextLine();
+    private static void editUser () {
+        String username = JOptionPane.showInputDialog("Masukkan username yang ingin diedit:");
         User user = users.stream().filter(u -> u.username.equals(username)).findFirst().orElse(null);
 
         if (user != null) {
-            System.out.print("Masukkan password baru: ");
-            String newPassword = scanner.nextLine();
+            String newPassword = JOptionPane.showInputDialog("Masukkan password baru:");
             user.password = newPassword;
             saveUsers();
-            System.out.println("Pengguna berhasil diperbarui.");
+            JOptionPane.showMessageDialog(null, "Pengguna berhasil diperbarui.");
         } else {
-            System.out.println("Pengguna tidak ditemukan.");
+            JOptionPane.showMessageDialog(null, "Pengguna tidak ditemukan.");
         }
     }
 
-    private static void deleteUser  () {
-        System.out.print("Masukkan username yang ingin dihapus: ");
-        String username = scanner.nextLine();
+    private static void deleteUser () {
+        String username = JOptionPane.showInputDialog("Masukkan username yang ingin dihapus:");
         User user = users.stream().filter(u -> u.username.equals(username)).findFirst().orElse(null);
 
         if (user != null) {
             users.remove(user);
             saveUsers();
-            System.out.println("Pengguna berhasil dihapus.");
+            JOptionPane.showMessageDialog(null, "Pengguna berhasil dihapus.");
         } else {
-            System.out.println("Pengguna tidak ditemukan.");
+            JOptionPane.showMessageDialog(null, "Pengguna tidak ditemukan.");
         }
     }
 
     private static void addIuran() {
-        System.out.print("Masukkan nama iuran: ");
-        String name = scanner.nextLine();
-        System.out.print("Masukkan jumlah iuran: ");
-        double amount = scanner.nextDouble();
-        scanner.nextLine(); // Clear buffer
-        iurans.add(new Iuran(name, amount));
-        saveIurans();
-        System.out.println("Iuran berhasil ditambahkan.");
-    }
+        JTextField nameField = new JTextField();
+        JTextField amountField = new JTextField();
+        Object[] message = {
+                "Nama Iuran:", nameField,
+                "Jumlah Iuran:", amountField
+        };
 
-    private static void viewIuran() {
-        System.out.println("Daftar Iuran:");
-        for (Iuran iuran : iurans) {
-            System.out.println("Nama: " + iuran.name + ", Jumlah: " + iuran.amount);
+        int option = JOptionPane.showConfirmDialog(null, message, "Tambah Iuran", JOptionPane.OK_CANCEL_OPTION);
+        if (option == JOptionPane.OK_OPTION) {
+            String name = nameField.getText();
+            double amount = Double.parseDouble(amountField.getText());
+            iurans.add(new Iuran(name, amount));
+            saveIurans();
+            JOptionPane.showMessageDialog(null, "Iuran berhasil ditambahkan.");
         }
     }
 
+    private static void viewIuran() {
+        StringBuilder iuranList = new StringBuilder("Daftar Iuran:\n");
+        for (Iuran iuran : iurans) {
+            iuranList.append("Nama: ").append(iuran.name).append(", Jumlah: ").append(iuran.amount).append("\n");
+        }
+        JOptionPane.showMessageDialog(null, iuranList.toString());
+    }
+
     private static void viewReports() {
-        System.out.println("Laporan Iuran:");
+        StringBuilder report = new StringBuilder("Laporan Iuran:\n");
         double totalPayments = 0;
         List<String> paidUsers = new ArrayList<>();
         List<String> unpaidUsers = new ArrayList<>();
@@ -249,61 +277,63 @@ public class KasApp {
             }
         }
 
-        System.out.println("Total Pembayaran yang Diterima: " + totalPayments);
-        System.out.println("Pengguna yang Telah Membayar Iuran:");
+        report.append("Total Pembayaran yang Diterima: ").append(totalPayments).append("\n");
+        report.append("Pengguna yang Telah Membayar Iuran:\n");
         for (String paidUser  : paidUsers) {
-            System.out.println(paidUser );
+            report.append(paidUser ).append("\n");
         }
-        System.out.println("Pengguna yang Belum Membayar Iuran:");
+        report.append("Pengguna yang Belum Membayar Iuran:\n");
         for (String unpaidUser  : unpaidUsers) {
-            System.out.println(unpaidUser );
+            report.append(unpaidUser ).append("\n");
         }
+        JOptionPane.showMessageDialog(null, report.toString());
     }
 
     private static void viewStatusIuran(String username) {
-        System.out.println("Status Iuran untuk " + username + ":");
+        StringBuilder statusList = new StringBuilder("Status Iuran untuk " + username + ":\n");
         for (Iuran iuran : iurans) {
             boolean paid = payments.stream().anyMatch(p -> p.username.equals(username) && p.iuranName.equals(iuran.name));
-            System.out.println("Iuran: " + iuran.name + ", Status: " + (paid ? "Sudah Dibayar" : "Belum Dibayar"));
+            statusList.append("Iuran: ").append(iuran.name).append(", Status: ").append(paid ? "Sudah Dibayar" : "Belum Dibayar").append("\n");
         }
+        JOptionPane.showMessageDialog(null, statusList.toString());
     }
 
     private static void payIuran(String username) {
-        System.out.println("Daftar Iuran:");
+        StringBuilder iuranList = new StringBuilder("Daftar Iuran:\n");
         for (Iuran iuran : iurans) {
-            System.out.println("Nama: " + iuran.name + ", Jumlah: " + iuran.amount);
+            iuranList.append("Nama: ").append(iuran.name).append(", Jumlah: ").append(iuran.amount).append("\n");
         }
-        System.out.print("Masukkan nama iuran yang ingin dibayar: ");
-        String iuranName = scanner.nextLine();
+        String iuranName = JOptionPane.showInputDialog(iuranList.toString() + "Masukkan nama iuran yang ingin dibayar:");
         Iuran selectedIuran = iurans.stream().filter(i -> i.name.equals(iuranName)).findFirst().orElse(null);
 
         if (selectedIuran != null) {
-            System.out.print("Masukkan jumlah pembayaran: ");
-            double amount = scanner.nextDouble();
-            scanner.nextLine(); // Clear buffer
+            String amountStr = JOptionPane.showInputDialog("Masukkan jumlah pembayaran:");
+            double amount = Double.parseDouble(amountStr);
             if (amount == selectedIuran.amount) {
-                System.out.print("Masukkan tanggal pembayaran: ");
-                String date = scanner.nextLine();
-                System.out.print("Masukkan path bukti gambar: ");
-                String imagePath = scanner.nextLine(); // Input path gambar
+                String date = JOptionPane.showInputDialog("Masukkan tanggal pembayaran:");
+                String imagePath = JOptionPane.showInputDialog("Masukkan path bukti gambar:");
                 payments.add(new Payment(username, iuranName, amount, date, imagePath));
                 savePayments();
-                System.out.println("Pembayaran berhasil.");
+                JOptionPane.showMessageDialog(null, "Pembayaran berhasil.");
             } else {
-                System.out.println("Jumlah pembayaran tidak sesu ai.");
+                JOptionPane.showMessageDialog(null, "Jumlah pembayaran tidak sesuai.");
             }
         } else {
-            System.out.println("Iuran tidak ditemukan.");
+            JOptionPane.showMessageDialog(null, "Iuran tidak ditemukan.");
         }
     }
 
     private static void viewPaymentHistory(String username) {
-        System.out.println("Riwayat Pembayaran untuk " + username + ":");
+        StringBuilder historyList = new StringBuilder("Riwayat Pembayaran untuk " + username + ":\n");
         for (Payment payment : payments) {
-            if (payment.username.equals(username)) {
-                System.out.println("Iuran: " + payment.iuranName + ", Jumlah: " + payment.amount + ", Tanggal: " + payment.date + ", Bukti: " + payment.imagePath);
+            if (payment.username .equals(username)) {
+                historyList.append("Iuran: ").append(payment.iuranName)
+                        .append(", Jumlah: ").append(payment.amount)
+                        .append(", Tanggal: ").append(payment.date)
+                        .append(", Bukti: ").append(payment.imagePath).append("\n");
             }
         }
+        JOptionPane.showMessageDialog(null, historyList.toString());
     }
 
     private static void saveUsers() {
