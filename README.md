@@ -1,7 +1,13 @@
 # KasApp
 program iuaran kas menggunakan java 
 
-Alur program 
+# Struktur File
+   KasApp.java: Kelas utama yang menjalankan aplikasi.
+   User.java: Kelas untuk mengelola data pengguna.
+   Iuran.java: Kelas untuk mengelola data iuran.
+   Payment.java: Kelas untuk mengelola data pembayaran.
+
+# Alur program 
 # Log in
     - Memasukkan username
     - Memasukkan Password
@@ -46,3 +52,6 @@ Alur program
           - tanggal pembayaran 
           - status 
       - logout 
+    
+      
+
