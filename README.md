@@ -2,10 +2,10 @@
 program iuaran kas menggunakan java 
 
 # Struktur File
-   KasApp.java: Kelas utama yang menjalankan aplikasi.
-   User.java: Kelas untuk mengelola data pengguna.
-   Iuran.java: Kelas untuk mengelola data iuran.
-   Payment.java: Kelas untuk mengelola data pembayaran.
+   - KasApp.java: Kelas utama yang menjalankan aplikasi.
+   - User.java: Kelas untuk mengelola data pengguna.
+   - Iuran.java: Kelas untuk mengelola data iuran.
+   - Payment.java: Kelas untuk mengelola data pembayaran.
 
 ## Teknologi yang Digunakan
 
