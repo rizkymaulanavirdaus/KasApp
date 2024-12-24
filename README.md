@@ -7,6 +7,17 @@ program iuaran kas menggunakan java
    Iuran.java: Kelas untuk mengelola data iuran.
    Payment.java: Kelas untuk mengelola data pembayaran.
 
+## Teknologi yang Digunakan
+
+- Java
+- Swing (untuk GUI)
+- File CSV (untuk penyimpanan data)
+
+## Persyaratan
+
+- Java Development Kit (JDK) 8 atau lebih tinggi
+- IDE seperti IntelliJ IDEA, Eclipse, atau NetBeans
+
 # Alur program 
 # Log in
     - Memasukkan username
